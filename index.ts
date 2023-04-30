@@ -12,30 +12,36 @@ export class Transporter<DataType = unknown> {
 
     constructor(private data: DataType) {}
 
-    public setData(data: DataType): void {
+    public updateData(data: DataType): void {
         this.data = data;
         this.updateDataInLine(0);
     }
 
     public addOrUpdateLineUnit(unit: NewLineUnit<DataType>): void {
-        const index = this.line.findIndex((lineUnit) => {
+        const index = this.line.findLastIndex((lineUnit) => {
             return lineUnit.id === unit.id;
         });
         if (index === -1) {
             const newUnit: LineUnit<DataType> = {
                 ...unit,
-                data: unit.fn(this.getData()),
+                data: unit.fn(this.getProcessedData()),
             }
             this.line.push(newUnit);
         } else {
             this.line[index].fn = unit.fn;
+
+            if (index !== (this.line.length - 1)) {
+                const lastItem = this.line[this.line.length - 1];
+                this.line[this.line.length - 1] = this.line[index];
+                this.line[index] = lastItem;
+            }
 
             this.updateDataInLine(index);
         }
     }
 
     public deleteLineUnit(id: string): void {
-        const index = this.line.findIndex((lineUnit) => {
+        const index = this.line.findLastIndex((lineUnit) => {
             return lineUnit.id === id;
         });
         if (index !== -1) {
@@ -44,7 +50,7 @@ export class Transporter<DataType = unknown> {
         }
     }
 
-    public getData(): DataType {
+    public getProcessedData(): DataType {
         return this.line.length > 0 ? this.line[this.line.length - 1].data : this.data;
     }
 
